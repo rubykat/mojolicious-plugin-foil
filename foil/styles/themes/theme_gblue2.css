@@ -1,0 +1,33 @@
+/* ================================================================== */
+/* THEME: Grey-Blue 2
+ * mid-blue background, dark text
+ *
+ * This only defines fonts, colours and borders, not layout.
+ */
+@import url(theme_gblue.css);
+/* ================================================================== */
+/* THEME: Grey-Blue 2 - fonts
+ */
+/* ------------------------------------------------------------------ */
+/* Fonts */
+h1, h2, h3, h4 {
+  font-family: Bahamas, Blippo, "Bauhaus 93", HomewardBound, Vogue, Totem, Crescent, verdana, helvetica, arial, sans-serif;
+  font-weight: normal;
+  color: black;
+}
+
+/* ================================================================== */
+/* General */
+.verge, header,
+footer,
+.side {
+  color: #000033;
+  background: #9999cc;
+  border-color: navy;
+}
+
+header,
+footer,
+.side {
+  background-image: url(gblue2_h.jpg);
+}

@@ -1,16 +1,9 @@
 package Mojolicious::Plugin::Foil;
 
+# ABSTRACT: Mojolicious Plugin for CSS theming
 =head1 NAME
 
 Mojolicious::Plugin::Foil - looks for app
-
-=head1 VERSION
-
-This describes version 0.1
-
-=cut
-
-our $VERSION = '0.1';
 
 =head1 SYNOPSIS
 
@@ -242,18 +235,18 @@ sub _make_navbar {
 
     my $rhost = $c->req->headers->host;
     my $nb_host = $rhost;
-    if (exists $c->config->{vhosts}->{$rhost}->{navbar_host})
+    if (exists $c->config->{foil}->{$rhost}->{navbar_host})
     {
-        $nb_host = $c->config->{vhosts}->{$rhost}->{navbar_host};
+        $nb_host = $c->config->{foil}->{$rhost}->{navbar_host};
     }
     my @out = ();
     push @out, '<nav>';
     push @out, '<ul>';
     # we start always with Home
     push @out, "<li><a href='http://$nb_host/'>Home</a></li>";
-    if (exists $c->config->{vhosts}->{$rhost}->{navbar_links})
+    if (exists $c->config->{foil}->{$rhost}->{navbar_links})
     {
-        foreach my $link (@{$c->config->{vhosts}->{$rhost}->{navbar_links}})
+        foreach my $link (@{$c->config->{foil}->{$rhost}->{navbar_links}})
         {
             my $name = $link;
             if ($link =~ m{(\w+)/?$})
@@ -292,9 +285,9 @@ sub _make_breadcrumb {
     my $rhost = $c->req->headers->host;
 
     my $hostname = $rhost;
-    if (exists $c->config->{vhosts}->{$rhost})
+    if (exists $c->config->{foil}->{$rhost})
     {
-        $hostname = $c->config->{vhosts}->{$rhost}->{name};
+        $hostname = $c->config->{foil}->{$rhost}->{name};
     }
 
     my $breadcrumb = "<b>$hostname</b> <a href='/'>Home</a>";
@@ -318,9 +311,9 @@ sub _make_logo {
 
     my $rhost = $c->req->headers->host;
     my $logoid = 'logo';
-    if (exists $c->config->{vhosts}->{$rhost})
+    if (exists $c->config->{foil}->{$rhost})
     {
-        $logoid = $c->config->{vhosts}->{$rhost}->{logoid};
+        $logoid = $c->config->{foil}->{$rhost}->{logoid};
     }
     my $logo =<<"EOT";
 <div id="$logoid" class="logo"><a href="/">Home</a></div>

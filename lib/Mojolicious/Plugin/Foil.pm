@@ -22,6 +22,8 @@ use common::sense;
 use File::Serialize;
 use Path::Tiny;
 use File::ShareDir 'module_dir';
+use File::Slurper 'read_binary';
+use Image::Size;
 
 =head1 REGISTER
 
@@ -41,7 +43,6 @@ sub register {
     # it could be in a FileShared location.
     my $app_home = path($app->home);
     my $foilshared = $app_home->child("foil");
-    my $foilshared;
 
     if (!-d $foilshared)
     {
@@ -76,7 +77,7 @@ sub register {
         my $c        = shift;
         my %args     = @_;
 
-        return $self->_make_logo($c,%args);
+        return $self->_make_logo_css($c,%args);
     } );
     $app->helper( 'foil_theme_id' => sub {
         my $c        = shift;
@@ -91,29 +92,39 @@ sub register {
         return $self->_make_theme_selector($c,%args);
     } );
     # add routes for setting the theme
-    $app->routes->get('/foil/set' => sub {
+    # and for delivering the logo
+    $self->{set_route} = '/foil/set';
+    $self->{logo_route} = '/foil/logo/:logo';
+    $app->routes->get($self->{set_route} => sub {
             my $c        = shift;
 
             $self->_set_theme($c);
-        })->name('foilset');
-    $self->{main_route} = 'foilset';
+        });
+    $app->routes->get($self->{logo_route} => sub {
+            my $c        = shift;
+
+            $self->_get_logo($c);
+        });
 
     if (exists $conf->{add_prefixes}
             and defined $conf->{add_prefixes})
     {
         my @prefixes = @{$conf->{add_prefixes}};
+        $self->{prefixes} = [];
         foreach my $rp (@prefixes)
         {
-            $rp =~ s!/$!!; # remove trailing slash
-            my $rname = $rp;
-            $rname =~ s/[^a-zA-Z0-9]//g;
-            $app->routes->get("${rp}/foil/set" => sub {
+            $rp =~ s!/$!!; # remove trailing slash, if any
+            push @{$self->{prefixes}}, $rp;
+            $app->routes->get(${rp} . $self->{set_route} => sub {
                     my $c        = shift;
 
                     $self->_set_theme($c);
-                })->name("${rname}foilset");
+                });
+            $app->routes->get(${rp} . $self->{logo_route} => sub {
+                    my $c        = shift;
 
-            $self->{extra_routes}->{$rname} = $rp;
+                    $self->_get_logo($c);
+                });
         }
     }
 }
@@ -142,21 +153,48 @@ sub _get_themes {
     $self->{themes} = deserialize_file $theme_file;
     if (!defined $self->{themes})
     {
-        die "failed to read themes from $theme_file";
+        die "'$theme_file' not parsed";
     }
-    if (ref $self->{themes} ne 'HASH')
+    if (!defined $self->{themes}->{themes})
     {
-        die "themes not HASH $theme_file";
+        die "'$theme_file' not themes->themes";
     }
-    if (!exists $self->{themes}->{themes})
+    if (ref $self->{themes}->{themes} ne 'HASH')
     {
-        die "themes->themes not there $theme_file";
-    }
-    if (ref $self->{themes}->{themes} ne 'ARRAY')
-    {
-        die "themes->themes not ARRAY $theme_file";
+        die "'$theme_file' themes->themes not HASH " . ref $self->{themes}->{themes};
     }
 } # _get_themes
+
+=head2 _get_prefix
+
+Get the "prefix" part of the current route, if it has one
+
+=cut
+
+sub _get_prefix {
+    my $self = shift;
+    my $c = shift;
+    my %args = @_;
+
+    my $route_prefix = '';
+    my $curr_url = $c->url_for('current');
+    # check if this matches one of the extra routes instead
+    # Note that we remember the prefix when we make the extra route
+    if (exists $self->{prefixes}
+            and defined $self->{prefixes})
+    {
+        foreach my $prefix (@{$self->{prefixes}})
+        {
+            if ($curr_url =~ /^\Q$prefix\E\//)
+            {
+                $route_prefix = $prefix;
+                last;
+            }
+        }
+    }
+
+    return $route_prefix;
+} # _get_prefix
 
 =head2 _make_theme_selector
 
@@ -172,24 +210,11 @@ sub _make_theme_selector {
     my $curr_theme = $self->_get_theme_id($c,%args);
 
     my $curr_url = $c->url_for('current');
-    my $opt_url = $c->url_for($self->{main_route});
-    # check if this matches one of the extra routes instead
-    # Note that we remember the prefix when we make the extra route
-    if (exists $self->{extra_routes}
-            and defined $self->{extra_routes})
+    my $opt_url = $c->url_for($self->{set_route});
+    my $prefix = $self->_get_prefix($c);
+    if ($prefix)
     {
-        my @route_names = keys %{$self->{extra_routes}};
-        foreach my $rname (@route_names)
-        {
-            my $prefix = $self->{extra_routes}->{$rname};
-            my $rurl = $c->url_for($prefix);
-
-            if ($curr_url =~ /^\Q$prefix\E\//)
-            {
-                $opt_url = $c->url_for("${prefix}/foil/set");
-                last;
-            }
-        }
+        $opt_url = $c->url_for(${prefix} . $self->{set_route});
     }
 
     my @out = ();
@@ -197,7 +222,7 @@ sub _make_theme_selector {
     push @out, "<form action='$opt_url'>";
     push @out, '<input type="submit" value="Select theme"/>';
     push @out, '<select name="theme">';
-    my @themes = @{$self->{themes}->{themes}};
+    my @themes = sort keys %{$self->{themes}->{themes}};
     for (my $i=0; $i < @themes; $i++)
     {
         my $th = $themes[$i];
@@ -298,28 +323,94 @@ sub _make_breadcrumb {
     return $breadcrumb;
 } # _make_breadcrumb
 
-=head2 _make_logo
+=head2 _make_logo_css
 
-Make breadcrumb showing the previous page.
+Make logo-link which points to the Home page.
 
 =cut
 
-sub _make_logo {
+sub _make_logo_css {
     my $self = shift;
     my $c = shift;
     my %args = @_;
 
+    my $curr_theme = $self->_get_theme_id($c,%args);
+    my $logo_type = $self->{themes}->{themes}->{$curr_theme};
+
     my $rhost = $c->req->headers->host;
-    my $logoid = 'logo';
-    if (exists $c->config->{foil}->{$rhost})
+    my $logo_file = $self->{foilshared}->child("styles/themes/${logo_type}.png")->stringify;
+    if (exists $c->config->{foil}->{$rhost}
+            and $c->config->{foil}->{$rhost}->{$logo_type})
     {
-        $logoid = $c->config->{foil}->{$rhost}->{logoid};
+        $logo_file = $c->config->{foil}->{$rhost}->{$logo_type};
     }
-    my $logo =<<"EOT";
-<div id="$logoid" class="logo"><a href="/">Home</a></div>
+    if (!-f $logo_file)
+    {
+        # not found, no logo
+        return '';
+    }
+    # remember the extension (it might be .jpg not .png)
+    my $ext = '';
+    if ($logo_file =~ /(\.\w+)$/)
+    {
+        $ext = $1;
+    }
+
+    # get the size of the image
+    my ($width, $height) = imgsize($logo_file);
+
+    # Foil will serve the image from "(prefix)foil/logo"
+    my $logo_url = $c->url_for("/foil/logo/${logo_type}${ext}");
+    my $prefix = $self->_get_prefix($c);
+    if ($prefix)
+    {
+        $logo_url = $c->url_for("${prefix}/foil/logo/${logo_type}${ext}");
+    }
+
+    my $logo_css =<<"EOT";
+<div class="logo"><a href="/"><img src="$logo_url" width="$width" height="$height" alt="Home"/></a></div>
 EOT
-    return $logo;
-} # _make_logo
+    return $logo_css;
+} # _make_logo_css
+
+=head2 _get_logo
+
+Display the logo.
+
+=cut
+
+sub _get_logo {
+    my $self = shift;
+    my $c = shift;
+
+    my $logo = $c->param('logo');
+    my $curr_theme = $self->_get_theme_id($c);
+    my $logo_type = $self->{themes}->{themes}->{$curr_theme};
+
+    my $rhost = $c->req->headers->host;
+
+    my $logo_file = $self->{foilshared}->child("styles/themes/${logo_type}.png")->stringify;
+    if (exists $c->config->{foil}->{$rhost}
+            and $c->config->{foil}->{$rhost}->{$logo_type})
+    {
+        $logo_file = $c->config->{foil}->{$rhost}->{$logo_type};
+    }
+    if (!-f $logo_file)
+    {
+        # not found
+    }
+    # extenstion is format (exclude the dot)
+    my $ext = '';
+    if ($logo_file =~ /\.(\w+)$/)
+    {
+        $ext = $1;
+    }
+    # read the image
+    my $bytes = read_binary($logo_file);
+
+    # now display the logo
+    $c->render(data => $bytes, format => $ext);
+} # _get_logo
 
 =head2 _get_theme_id
 

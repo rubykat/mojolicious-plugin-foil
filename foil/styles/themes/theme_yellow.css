@@ -1,36 +1,13 @@
 /* ================================================================== */
 /* THEME: Yellow
- * yellow background, black text
- *
- * This only defines fonts, colours and borders, not layout.
  */
 /* ================================================================== */
 /* THEME: Yellow - fonts
  */
 /* ================================================================== */
 /* ICONS - dark on light
- * Logos and nav arrows with transparent backgrounds
+ * Nav arrows with transparent backgrounds
  */
-#kslogo a {
-  display: block;
-  background: transparent url(katspace_logo10.png) no-repeat center center;
-  width: 138px;
-  height: 52px;
-  text-decoration: none;
-  text-indent: -9999px;
-}
-
-#kplogo a {
-  display: block;
-  background: transparent url(katplay_logo_black.png) no-repeat center center;
-  width: 119px;
-  height: 54px;
-  text-decoration: none;
-  text-indent: -9999px;
-}
-
-/* ------------------------------------------------------------------ */
-/* SIDEBAR area */
 .side nav li > ul {
   list-style-image: url(nav_black.png);
 }

@@ -1,7 +1,5 @@
 /* ================================================================== */
 /* THEME: Green3
- *
- * This only defines fonts, colours and borders, not layout.
  */
 /* ================================================================== */
 /* THEME: Green3 - fonts
@@ -20,30 +18,8 @@ h3, h4 {
 
 /* ================================================================== */
 /* ICONS - light on dark
- * Logos and nav arrows with transparent backgrounds
+ * Nav arrows with transparent backgrounds
  */
-/* ------------------------------------*/
-/* LOGO */
-#kslogo a {
-  display: block;
-  background: transparent url(katspace_logo11.png) no-repeat center center;
-  width: 138px;
-  height: 52px;
-  text-decoration: none;
-  text-indent: -9999px;
-}
-
-#kplogo a {
-  display: block;
-  background: transparent url(katplay_logo_white.png) no-repeat center center;
-  width: 125px;
-  height: 60px;
-  text-decoration: none;
-  text-indent: -9999px;
-}
-
-/* ------------------------------------------------------------------ */
-/* SIDEBAR area */
 .side nav li > ul {
   list-style-image: url(nav_white.png);
 }

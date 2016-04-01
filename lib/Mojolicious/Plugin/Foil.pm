@@ -443,12 +443,26 @@ sub _set_theme {
     {
         $c->session->{theme} = $theme;
     }
-    $c->redirect_to($c->req->headers->referrer);
+    my $referrer = $c->req->headers->referrer;
+
+    my $out =<<"EOT";
+<p>Current theme is "$theme".</p>
+<p>Back to: <a href='$referrer'>$referrer</a></p>
+EOT
+    $c->render(template=>'foil/settings',
+        foil_settings=>$out);
 } # _set_theme
 
 1; # End of Mojolicious::Plugin::Foil
 
 __DATA__
+
+@@ foil/settings.html.ep
+% layout 'foil';
+<h1>Theme</h1>
+<div>
+<%== $foil_settings %>
+</div>
 
 @@ foil/header.html.ep
 <div id="header_top">

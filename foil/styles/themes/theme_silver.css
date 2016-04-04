@@ -82,14 +82,14 @@ header nav .current a {
 .button a:link, input[type=submit] a:link, header nav a a:link,
 header nav .selflink a:link,
 header nav em a:link,
-header nav .current a a:link {
+header nav .current a a:link, a.button:link, header nav a:link {
   color: #111111;
 }
 
 .button a:visited, input[type=submit] a:visited, header nav a a:visited,
 header nav .selflink a:visited,
 header nav em a:visited,
-header nav .current a a:visited {
+header nav .current a a:visited, a.button:visited, header nav a:visited {
   color: #000066;
 }
 

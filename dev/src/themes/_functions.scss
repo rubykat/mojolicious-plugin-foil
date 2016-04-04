@@ -142,10 +142,10 @@
         border-color: $button-border;
         background-color: $button-bg;
     }
-    .button a:link {
+    .button a:link, a.button:link {
         color: $button-fg;
     }
-    .button a:visited {
+    .button a:visited, a.button:visited {
         color: set-visited($button-bg);
     }
     input[type=submit] {

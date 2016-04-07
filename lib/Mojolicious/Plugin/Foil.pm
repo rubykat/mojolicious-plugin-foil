@@ -424,7 +424,16 @@ sub _get_theme_id {
     my %args = @_;
 
     my $theme = $c->session('theme');
-    $theme = 'silver' if !$theme;
+    if (!$theme) # try default theme
+    {
+        my $rhost = $c->req->headers->host;
+        if (exists $c->config->{foil}->{$rhost}
+                and $c->config->{foil}->{$rhost}->{default_theme})
+        {
+            $theme = $c->config->{foil}->{$rhost}->{default_theme};
+        }
+    }
+    $theme = 'silver' if !$theme; # fall back on silver
     return $theme;
 } # _get_theme_id
 

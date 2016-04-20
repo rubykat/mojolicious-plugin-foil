@@ -323,13 +323,13 @@ sub _make_breadcrumb {
     return $breadcrumb;
 } # _make_breadcrumb
 
-=head2 _make_logo_css
+=head2 _logo_file
 
-Make logo-link which points to the Home page.
+Find the name of the current logo file
 
 =cut
 
-sub _make_logo_css {
+sub _logo_file {
     my $self = shift;
     my $c = shift;
     my %args = @_;
@@ -349,6 +349,37 @@ sub _make_logo_css {
         # not found, no logo
         return '';
     }
+    return $logo_file;
+} # _logo_file
+
+=head2 _make_logo_css
+
+Make logo-link which points to the Home page.
+
+=cut
+
+sub _make_logo_css {
+    my $self = shift;
+    my $c = shift;
+    my %args = @_;
+
+    my $curr_theme = $self->_get_theme_id($c,%args);
+    my $logo_type = $self->{themes}->{themes}->{$curr_theme};
+    my $logo_prefix = '';
+
+    my $rhost = $c->req->headers->host;
+    my $logo_file = $self->_logo_file($c,%args);
+    if (!-f $logo_file)
+    {
+        # not found, no logo
+        return '';
+    }
+    if (exists $c->config->{foil}->{$rhost}
+            and $c->config->{foil}->{$rhost}->{name})
+    {
+        $logo_prefix = $c->config->{foil}->{$rhost}->{name};
+        $logo_prefix =~ s/[^[a-zA-Z0-9]//g;
+    }
     # remember the extension (it might be .jpg not .png)
     my $ext = '';
     if ($logo_file =~ /(\.\w+)$/)
@@ -360,11 +391,11 @@ sub _make_logo_css {
     my ($width, $height) = imgsize($logo_file);
 
     # Foil will serve the image from "(prefix)foil/logo"
-    my $logo_url = $c->url_for("/foil/logo/${logo_type}${ext}");
+    my $logo_url = $c->url_for("/foil/logo/${logo_prefix}${logo_type}${ext}");
     my $prefix = $self->_get_prefix($c);
     if ($prefix)
     {
-        $logo_url = $c->url_for("${prefix}/foil/logo/${logo_type}${ext}");
+        $logo_url = $c->url_for("${prefix}/foil/logo/${logo_prefix}${logo_type}${ext}");
     }
 
     my $logo_css =<<"EOT";
@@ -384,20 +415,12 @@ sub _get_logo {
     my $c = shift;
 
     my $logo = $c->param('logo');
-    my $curr_theme = $self->_get_theme_id($c);
-    my $logo_type = $self->{themes}->{themes}->{$curr_theme};
 
-    my $rhost = $c->req->headers->host;
-
-    my $logo_file = $self->{foilshared}->child("styles/themes/${logo_type}.png")->stringify;
-    if (exists $c->config->{foil}->{$rhost}
-            and $c->config->{foil}->{$rhost}->{$logo_type})
-    {
-        $logo_file = $c->config->{foil}->{$rhost}->{$logo_type};
-    }
+    my $logo_file = $self->_logo_file($c);
     if (!-f $logo_file)
     {
         # not found
+        return;
     }
     # extenstion is format (exclude the dot)
     my $ext = '';

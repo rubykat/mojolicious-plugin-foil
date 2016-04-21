@@ -126,8 +126,8 @@ sub register {
                     $self->_get_logo($c);
                 });
         }
-    }
-}
+    } # prefixes
+} # register
 
 =head1 Helper Functions
 
@@ -378,8 +378,14 @@ sub _make_logo_css {
             and $c->config->{foil}->{$rhost}->{name})
     {
         $logo_prefix = $c->config->{foil}->{$rhost}->{name};
-        $logo_prefix =~ s/[^[a-zA-Z0-9]//g;
     }
+    else
+    {
+        $logo_prefix = $rhost;
+    }
+    $logo_prefix =~ s/[^[a-zA-Z0-9]//g;
+    $logo_prefix .= '_' if $logo_prefix;
+
     # remember the extension (it might be .jpg not .png)
     my $ext = '';
     if ($logo_file =~ /(\.\w+)$/)

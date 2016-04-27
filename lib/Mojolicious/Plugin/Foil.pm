@@ -100,11 +100,6 @@ sub register {
 
             $self->_set_theme($c);
         });
-    $app->routes->get($self->{logo_route} => sub {
-            my $c        = shift;
-
-            $self->_get_logo($c);
-        });
 
     if (exists $conf->{add_prefixes}
             and defined $conf->{add_prefixes})
@@ -119,11 +114,6 @@ sub register {
                     my $c        = shift;
 
                     $self->_set_theme($c);
-                });
-            $app->routes->get(${rp} . $self->{logo_route} => sub {
-                    my $c        = shift;
-
-                    $self->_get_logo($c);
                 });
         }
     } # prefixes
@@ -323,35 +313,6 @@ sub _make_breadcrumb {
     return $breadcrumb;
 } # _make_breadcrumb
 
-=head2 _logo_file
-
-Find the name of the current logo file
-
-=cut
-
-sub _logo_file {
-    my $self = shift;
-    my $c = shift;
-    my %args = @_;
-
-    my $curr_theme = $self->_get_theme_id($c,%args);
-    my $logo_type = $self->{themes}->{themes}->{$curr_theme};
-
-    my $rhost = $c->req->headers->host;
-    my $logo_file = $self->{foilshared}->child("styles/themes/${logo_type}.png")->stringify;
-    if (exists $c->config->{foil}->{$rhost}
-            and $c->config->{foil}->{$rhost}->{$logo_type})
-    {
-        $logo_file = $c->config->{foil}->{$rhost}->{$logo_type};
-    }
-    if (!-f $logo_file)
-    {
-        # not found, no logo
-        return '';
-    }
-    return $logo_file;
-} # _logo_file
-
 =head2 _make_logo_css
 
 Make logo-link which points to the Home page.
@@ -365,81 +326,20 @@ sub _make_logo_css {
 
     my $curr_theme = $self->_get_theme_id($c,%args);
     my $logo_type = $self->{themes}->{themes}->{$curr_theme};
-    my $logo_prefix = '';
+##    my $logo_prefix = '';
 
+    my $logo_url = $c->url_for("/styles/themes/foil_${logo_type}.png");
     my $rhost = $c->req->headers->host;
-    my $logo_file = $self->_logo_file($c,%args);
-    if (!-f $logo_file)
-    {
-        # not found, no logo
-        return '';
-    }
     if (exists $c->config->{foil}->{$rhost}
-            and $c->config->{foil}->{$rhost}->{name})
+            and $c->config->{foil}->{$rhost}->{"${logo_type}_url"})
     {
-        $logo_prefix = $c->config->{foil}->{$rhost}->{name};
+        $logo_url = $c->config->{foil}->{$rhost}->{"${logo_type}_url"};
     }
-    else
-    {
-        $logo_prefix = $rhost;
-    }
-    $logo_prefix =~ s/[^[a-zA-Z0-9]//g;
-    $logo_prefix .= '_' if $logo_prefix;
-
-    # remember the extension (it might be .jpg not .png)
-    my $ext = '';
-    if ($logo_file =~ /(\.\w+)$/)
-    {
-        $ext = $1;
-    }
-
-    # get the size of the image
-    my ($width, $height) = imgsize($logo_file);
-
-    # Foil will serve the image from "(prefix)foil/logo"
-    my $logo_url = $c->url_for("/foil/logo/${logo_prefix}${logo_type}${ext}");
-    my $prefix = $self->_get_prefix($c);
-    if ($prefix)
-    {
-        $logo_url = $c->url_for("${prefix}/foil/logo/${logo_prefix}${logo_type}${ext}");
-    }
-
     my $logo_css =<<"EOT";
-<div class="logo"><a href="/"><img src="$logo_url" width="$width" height="$height" alt="Home"/></a></div>
+<div class="logo"><a href="/"><img src="$logo_url" alt="Home"/></a></div>
 EOT
     return $logo_css;
 } # _make_logo_css
-
-=head2 _get_logo
-
-Display the logo.
-
-=cut
-
-sub _get_logo {
-    my $self = shift;
-    my $c = shift;
-
-    my $logo = $c->param('logo');
-
-    my $logo_file = $self->_logo_file($c);
-    if (!-f $logo_file)
-    {
-        # not found
-        return;
-    }
-    # extenstion is format (exclude the dot)
-    my $ext = '';
-    if ($logo_file =~ /\.(\w+)$/)
-    {
-        $ext = $1;
-    }
-    # read the image
-    my $bytes = read_binary($logo_file);
-
-    # now display the logo
-    $c->render(data => $bytes, format => $ext);
-} # _get_logo
 
 =head2 _get_theme_id
 

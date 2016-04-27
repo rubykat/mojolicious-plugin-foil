@@ -11,12 +11,6 @@ $(BUILD)/themes:
 $(BUILD)/layout:
 	mkdir $(BUILD)/layout
 
-$(BUILD)/fa/fonts:
-	mkdir -p $(BUILD)/fa/fonts
-
-$(BUILD)/fa/css:
-	mkdir -p $(BUILD)/fa/css
-
 $(BUILD)/j:
 	mkdir $(BUILD)/j
 

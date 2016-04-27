@@ -352,7 +352,8 @@ sub _get_theme_id {
     my $c = shift;
     my %args = @_;
 
-    my $theme = $c->session('theme');
+    my $rhost = $c->req->headers->host;
+    my $theme = $c->session("theme_${rhost}");
     if (!$theme) # try default theme
     {
         my $rhost = $c->req->headers->host;
@@ -376,10 +377,11 @@ sub _set_theme {
     my $self = shift;
     my $c = shift;
 
+    my $rhost = $c->req->headers->host;
     my $theme = $c->param('theme');
     if ($theme)
     {
-        $c->session->{theme} = $theme;
+        $c->session->{"theme_${rhost}"} = $theme;
     }
     my $referrer = $c->req->headers->referrer;
 

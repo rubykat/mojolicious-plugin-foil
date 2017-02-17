@@ -21,7 +21,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use common::sense;
 use File::Serialize;
 use Path::Tiny;
-use File::ShareDir 'module_dir';
+use File::ShareDir;
 use File::Slurper 'read_binary';
 use Image::Size;
 
@@ -51,8 +51,11 @@ sub register {
         $foilshared = $top->child("foil");
         if (!-d $foilshared)
         {
-            my $module_dir = path(module_dir(__PACKAGE__));
-            $foilshared = $module_dir->child("foil");
+            # use File::ShareDir with the distribution name
+            my $dist = __PACKAGE__;
+            $dist =~ s/::/-/g;
+            my $dist_dir = path(File::ShareDir::dist_dir($dist));
+            $foilshared = $dist_dir;
         }
     }
 

@@ -24,6 +24,7 @@ use Path::Tiny;
 use File::ShareDir;
 use File::Slurper 'read_binary';
 use Image::Size;
+use HTML::LinkList;
 
 =head1 REGISTER
 
@@ -75,6 +76,12 @@ sub register {
         my %args     = @_;
 
         return $self->_make_breadcrumb($c,%args);
+    } );
+    $app->helper( 'foil_referrer' => sub {
+        my $c        = shift;
+        my %args     = @_;
+
+        return $self->_make_referrer($c,%args);
     } );
     $app->helper( 'foil_logo' => sub {
         my $c        = shift;
@@ -290,7 +297,7 @@ sub _make_navbar {
 
 =head2 _make_breadcrumb
 
-Make breadcrumb showing the previous page.
+Make breadcrumb showing the current page.
 
 =cut
 
@@ -299,22 +306,53 @@ sub _make_breadcrumb {
     my $c = shift;
     my %args = @_;
 
-    my $url = $c->req->headers->referrer;
-    my $rhost = $c->req->headers->host;
+    my $breadcrumb = '';
+    my $url = $c->req->url;
+    if (defined $url and $url)
+    {
+        $breadcrumb = HTML::LinkList::breadcrumb_trail(current_url=>$url,
+            links_head=>'', links_foot=>'');
+    }
+    else
+    {
+        my $rhost = $c->req->headers->host;
 
+        my $hostname = $rhost;
+        if (exists $c->config->{foil}->{$rhost})
+        {
+            $hostname = $c->config->{foil}->{$rhost}->{name};
+        }
+
+        $breadcrumb = "<b>$hostname</b> <a href='/'>Home</a>";
+    }
+    return $breadcrumb;
+} # _make_breadcrumb
+
+=head2 _make_referrer
+
+Make link showing the previous page.
+
+=cut
+
+sub _make_referrer {
+    my $self = shift;
+    my $c = shift;
+    my %args = @_;
+
+    my $rhost = $c->req->headers->host;
     my $hostname = $rhost;
     if (exists $c->config->{foil}->{$rhost})
     {
         $hostname = $c->config->{foil}->{$rhost}->{name};
     }
-
-    my $breadcrumb = "<b>$hostname</b> <a href='/'>Home</a>";
+    my $referrer = "<b>$hostname</b>";
+    my $url = $c->req->headers->referrer;
     if (defined $url)
     {
-        $breadcrumb .= " &gt; <a href='$url'>$url</a>";
+        $referrer .= " <a href='$url'>$url</a>";
     }
-    return $breadcrumb;
-} # _make_breadcrumb
+    return $referrer;
+} # _make_referrer
 
 =head2 _make_logo_css
 

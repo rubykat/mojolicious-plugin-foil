@@ -259,19 +259,20 @@ sub _make_navbar {
     my %args = @_;
 
     my $rhost = $c->req->headers->host;
+    my $foilconf = $self->_get_foilconf($c);
     my $nb_host = $rhost;
-    if (exists $c->config->{foil}->{$rhost}->{navbar_host})
+    if (exists $foilconf->{navbar_host})
     {
-        $nb_host = $c->config->{foil}->{$rhost}->{navbar_host};
+        $nb_host = $foilconf->{navbar_host};
     }
     my @out = ();
     push @out, '<nav>';
     push @out, '<ul>';
     # we start always with Home
     push @out, "<li><a href='http://$nb_host/'>Home</a></li>";
-    if (exists $c->config->{foil}->{$rhost}->{navbar_links})
+    if (exists $foilconf->{navbar_links})
     {
-        foreach my $link (@{$c->config->{foil}->{$rhost}->{navbar_links}})
+        foreach my $link (@{$foilconf->{navbar_links}})
         {
             my $name = $link;
             if ($link =~ m{(\w+)/?$})
@@ -316,11 +317,12 @@ sub _make_breadcrumb {
     else
     {
         my $rhost = $c->req->headers->host;
+        my $foilconf = $self->_get_foilconf($c);
 
         my $hostname = $rhost;
-        if (exists $c->config->{foil}->{$rhost})
+        if (exists $foilconf->{name})
         {
-            $hostname = $c->config->{foil}->{$rhost}->{name};
+            $hostname = $foilconf->{name};
         }
 
         $breadcrumb = "<b>$hostname</b> <a href='/'>Home</a>";
@@ -341,9 +343,10 @@ sub _make_referrer {
 
     my $rhost = $c->req->headers->host;
     my $hostname = $rhost;
-    if (exists $c->config->{foil}->{$rhost})
+    my $foilconf = $self->_get_foilconf($c);
+    if (exists $foilconf->{name})
     {
-        $hostname = $c->config->{foil}->{$rhost}->{name};
+        $hostname = $foilconf->{name};
     }
     my $referrer = "<b>$hostname</b>";
     my $url = $c->req->headers->referrer;
@@ -367,14 +370,13 @@ sub _make_logo_css {
 
     my $curr_theme = $self->_get_theme_id($c,%args);
     my $logo_type = $self->{themes}->{themes}->{$curr_theme};
-##    my $logo_prefix = '';
 
     my $logo_url = $c->url_for("/styles/themes/foil_${logo_type}.png");
     my $rhost = $c->req->headers->host;
-    if (exists $c->config->{foil}->{$rhost}
-            and $c->config->{foil}->{$rhost}->{"${logo_type}_url"})
+    my $foilconf = $self->_get_foilconf($c);
+    if ($foilconf->{"${logo_type}_url"})
     {
-        $logo_url = $c->config->{foil}->{$rhost}->{"${logo_type}_url"};
+        $logo_url = $foilconf->{"${logo_type}_url"};
     }
     my $logo_css =<<"EOT";
 <div class="logo"><a href="/"><img src="$logo_url" alt="Home"/></a></div>
@@ -398,10 +400,10 @@ sub _get_theme_id {
     if (!$theme) # try default theme
     {
         my $rhost = $c->req->headers->host;
-        if (exists $c->config->{foil}->{$rhost}
-                and $c->config->{foil}->{$rhost}->{default_theme})
+        my $foilconf = $self->_get_foilconf($c);
+        if ($foilconf->{default_theme})
         {
-            $theme = $c->config->{foil}->{$rhost}->{default_theme};
+            $theme = $foilconf->{default_theme};
         }
     }
     $theme = 'silver' if !$theme; # fall back on silver
@@ -433,6 +435,28 @@ EOT
     $c->render(template=>'foil/settings',
         foil_settings=>$out);
 } # _set_theme
+
+=head2 _get_foilconf
+
+Get the appropriate config for this rhost.
+
+=cut
+sub _get_foilconf {
+    my $self = shift;
+    my $c = shift;
+
+    my $rhost = $c->req->headers->host;
+    my $foilconf;
+    if (exists $c->{config}->{foil}->{$rhost})
+    {
+        $foilconf = $c->{config}->{foil}->{$rhost};
+    }
+    else
+    {
+        $foilconf = $c->{config}->{foil}->{default};
+    }
+    return $foilconf;
+} # _get_foilconf
 
 1; # End of Mojolicious::Plugin::Foil
 

@@ -447,13 +447,13 @@ sub _get_foilconf {
 
     my $rhost = $c->req->headers->host;
     my $foilconf;
-    if (exists $c->{config}->{foil}->{$rhost})
+    if (exists $c->config->{foil}->{$rhost})
     {
-        $foilconf = $c->{config}->{foil}->{$rhost};
+        $foilconf = $c->config->{foil}->{$rhost};
     }
     else
     {
-        $foilconf = $c->{config}->{foil}->{default};
+        $foilconf = $c->config->{foil}->{default};
     }
     return $foilconf;
 } # _get_foilconf

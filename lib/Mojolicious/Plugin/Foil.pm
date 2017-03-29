@@ -25,6 +25,7 @@ use File::ShareDir;
 use File::Slurper 'read_binary';
 use Image::Size;
 use HTML::LinkList;
+use Config::Context;
 
 =head1 REGISTER
 
@@ -64,6 +65,7 @@ sub register {
     $self->{foilshared} = $foilshared;
 
     $self->_get_themes($app);
+    $self->_setup_concon($app,$conf);
 
     $app->helper( 'foil_navbar' => sub {
         my $c        = shift;
@@ -164,6 +166,53 @@ sub _get_themes {
         die "'$theme_file' themes->themes not HASH " . ref $self->{themes}->{themes};
     }
 } # _get_themes
+
+=head2 _setup_concon
+
+Set up the Config::Context stuff.
+
+=cut
+sub _setup_concon {
+    my $self = shift;
+    my $app = shift;
+
+    if (!exists $app->config->{foil}->{context})
+    {
+        return;
+    }
+
+    my %cc_opts = (
+	driver => 'ConfigGeneral',
+	match_sections => [
+	    {
+		name          => 'Page',
+		section_type  => 'page',
+		match_type    => 'path',
+	    },
+	    {
+		name          => 'PageMatch',
+		section_type  => 'page',
+		match_type    => 'regex',
+	    },
+	    {
+		name          => 'File',
+		section_type  => 'file',
+		match_type    => 'path',
+	    },
+	    {
+		name          => 'FileMatch',
+		section_type  => 'file',
+		match_type    => 'regex',
+	    },
+	],
+
+    );
+    $self->{concon} = Config::Context->new
+    (
+        string => $app->config->{foil}->{context},
+        %cc_opts
+    );
+} # _setup_concon
 
 =head2 _get_prefix
 
@@ -397,6 +446,15 @@ sub _get_theme_id {
 
     my $rhost = $c->req->headers->host;
     my $theme = $c->session("theme_${rhost}");
+    my $path = $c->req->url->to_abs->path;
+    if (!$theme and defined $self->{concon}) # try context theme
+    {
+        my $cc = $self->{concon}->context(page=>$path);
+        if (exists $cc->{theme})
+        {
+            $theme = $cc->{theme};
+        }
+    }
     if (!$theme) # try default theme
     {
         my $rhost = $c->req->headers->host;

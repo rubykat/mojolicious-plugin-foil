@@ -276,8 +276,8 @@ footer div {
   }
 
   main {
-    margin: 1ex;
-    width: 98%;
+    margin: 0;
+    width: 100%;
     background: white;
     color: black;
     left: 0;

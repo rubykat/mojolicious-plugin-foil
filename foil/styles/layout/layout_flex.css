@@ -88,9 +88,10 @@ header nav .current a {
   border-radius: 20px 5px 20px 5px;
 }
 
-.button:hover, header nav a:hover,
-header nav .selflink:hover,
-header nav em:hover, input[type=submit]:hover,
+.button a:hover, header nav a a:hover,
+header nav .selflink a:hover,
+header nav em a:hover,
+header nav .current a a:hover, input[type=submit] a:hover,
 header nav a:hover {
   text-decoration: underline;
   background-image: url(gloss2.png);

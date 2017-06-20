@@ -82,10 +82,12 @@ header nav .current a {
     border-radius: 20px 5px 20px 5px;
 } 
 
-.button a:hover,
+.button:hover,
+header nav a:hover {
+    background-image: url(gloss2.png);
+}
 header nav a:hover {
     text-decoration: underline;
-    background-image: url(gloss2.png);
 }
 .button:active,
 header nav a:active {

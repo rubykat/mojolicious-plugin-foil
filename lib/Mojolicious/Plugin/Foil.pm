@@ -19,7 +19,7 @@ Also other looks like breadcrumbs and other header stuff.
 
 use Mojo::Base 'Mojolicious::Plugin';
 use common::sense;
-use File::Serialize;
+use JSON::MaybeXS;
 use Path::Tiny;
 use File::ShareDir;
 use File::Slurper 'read_binary';
@@ -152,7 +152,8 @@ sub _get_themes {
     {
         die "'$theme_file' not found";
     }
-    $self->{themes} = deserialize_file $theme_file;
+    my $theme_txt = path($theme_file)->slurp;
+    $self->{themes} = decode_json($theme_txt);
     if (!defined $self->{themes})
     {
         die "'$theme_file' not parsed";

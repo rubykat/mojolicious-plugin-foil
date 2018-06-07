@@ -245,8 +245,9 @@ footer {
 @media print {
     header { display: none; }
     footer { display: none; }
-    .side { display: none; }
+    .verso-wrap, .recto-wrap { display: none; }
     #inner { display: block; }
+    #main-wrap { width: 100%; }
     main {
 	margin: 0;
 	width: 100%;

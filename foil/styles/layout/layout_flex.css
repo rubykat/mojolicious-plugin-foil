@@ -270,12 +270,16 @@ footer div {
     display: none;
   }
 
-  .side {
+  .verso-wrap, .recto-wrap {
     display: none;
   }
 
   #inner {
     display: block;
+  }
+
+  #main-wrap {
+    width: 100%;
   }
 
   main {

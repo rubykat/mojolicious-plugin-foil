@@ -426,7 +426,7 @@ sub _make_logo_css {
     my $foilconf = $self->_get_foilconf($c);
     if ($foilconf->{"${logo_type}_url"})
     {
-        $logo_url = $foilconf->{"${logo_type}_url"};
+        $logo_url = $c->url_for($foilconf->{"${logo_type}_url"});
     }
     my $logo_css =<<"EOT";
 <div class="logo"><a href="/"><img src="$logo_url" alt="Home"/></a></div>

@@ -15,10 +15,10 @@ $(BUILD)/j:
 	mkdir $(BUILD)/j
 
 $(BUILD)/themes/%.css: $(SRC)/themes/%.scss
-	sass --sourcemap=none --style expanded --update $(SRC)/themes:$(BUILD)/themes
+	sassc --sourcemap=none --style expanded --update $(SRC)/themes:$(BUILD)/themes
 
 $(BUILD)/layout/%.css: $(SRC)/layout/%.scss
-	sass --sourcemap=none --style expanded --update $(SRC)/layout:$(BUILD)/layout
+	sassc --sourcemap=none --style expanded --update $(SRC)/layout:$(BUILD)/layout
 
 $(BUILD)/%:  $(SRC)/%
 	cp -p $< $@

@@ -497,23 +497,14 @@ EOT
 
 =head2 _get_foilconf
 
-Get the appropriate config for this rhost.
+Get the foil config.
 
 =cut
 sub _get_foilconf {
     my $self = shift;
     my $c = shift;
 
-    my $rhost = $c->req->headers->host;
-    my $foilconf;
-    if (exists $c->config->{foil}->{$rhost})
-    {
-        $foilconf = $c->config->{foil}->{$rhost};
-    }
-    else
-    {
-        $foilconf = $c->config->{foil}->{default};
-    }
+    my $foilconf = $c->config->{foil};
     return $foilconf;
 } # _get_foilconf
 

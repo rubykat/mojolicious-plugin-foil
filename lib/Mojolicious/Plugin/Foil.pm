@@ -299,6 +299,9 @@ Top-level navigation.
 The difficulty with this is that using a reverse-proxy means that
 all relative-ish URLs will be rewritten to be relative to this app.
 So we need to take account of the host the request is coming from.
+But this doesn't work when things are being served over https (as with Caddy).
+Argh!
+
 Absolute full URLs shouldn't be re-written.
 
 =cut
@@ -330,6 +333,10 @@ sub _make_navbar {
                 $name = ucfirst(lc($1));
             }
             if ($link =~ /^http/)
+            {
+                push @out, "<li><a href='${link}'>$name</a></li>";
+            }
+            elsif ($link =~ m{^/}) # try checking for absolute anyway?
             {
                 push @out, "<li><a href='${link}'>$name</a></li>";
             }
